@@ -2,45 +2,64 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>全国連打スピード選手権</title>
 
 <style>
 body{
+  margin:0;
   font-family:sans-serif;
   text-align:center;
   background:linear-gradient(#eef,#cde);
 }
 h1{margin-top:10px}
+
 #panel{
   background:#fff;
-  width:360px;
+  width:95%;
+  max-width:360px;
   margin:20px auto;
   padding:15px;
   border-radius:12px;
   box-shadow:0 4px 10px rgba(0,0,0,.2);
 }
+
 button{
-  padding:10px 18px;
-  margin:5px;
+  padding:12px 20px;
+  margin:6px;
   font-size:16px;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
   cursor:pointer;
 }
+
 .easy{background:#8bc34a}
 .normal{background:#03a9f4;color:#fff}
+
 #tap{
   margin:20px auto;
-  width:260px;
+  width:100%;
+  max-width:260px;
   height:120px;
   line-height:120px;
   font-size:28px;
   background:#ddd;
-  border-radius:12px;
+  border-radius:14px;
   user-select:none;
+  touch-action:manipulation;
 }
-.running{background:#ff5722;color:#fff}
-#countdown{font-size:48px;color:#ff9800;height:60px}
+
+.running{
+  background:#ff5722;
+  color:#fff;
+}
+
+#countdown{
+  font-size:48px;
+  color:#ff9800;
+  height:60px;
+}
+
 .rank{margin:6px 0}
 </style>
 </head>
@@ -50,7 +69,7 @@ button{
 <p>現在 <b id="population"></b> 人が参加中</p>
 
 <div id="panel">
-  <input id="player" placeholder="プレイヤー名" maxlength="10"><br>
+  <input id="player" placeholder="プレイヤー名" maxlength="10"><br><br>
 
   <button class="easy" onclick="setMode(5)">5秒</button>
   <button class="normal" onclick="setMode(15)">15秒</button>
@@ -87,17 +106,19 @@ const nationRank=document.getElementById("nationRank");
 const rankingEl=document.getElementById("ranking");
 const countdownEl=document.getElementById("countdown");
 
-/* 難易度 */
+/* 難易度設定 */
 function setMode(sec){
   limit=sec;
   document.getElementById("modeText").textContent=sec+"秒";
+  showRank();
 }
 
-/* スタート（カウントダウン付き） */
+/* スタート（カウントダウン） */
 function start(){
   if(playing) return;
   let c=3;
   countdownEl.textContent=c;
+
   const cd=setInterval(()=>{
     c--;
     if(c>0){
@@ -130,12 +151,19 @@ function begin(){
   },1000);
 }
 
-/* タップ */
-tap.onclick=()=>{
+/* タップ（スマホ＋PC） */
+function tapAction(){
   if(!playing) return;
   count++;
   countEl.textContent=count;
-};
+}
+
+tap.addEventListener("touchstart", e=>{
+  e.preventDefault();
+  tapAction();
+});
+
+tap.addEventListener("click", tapAction);
 
 /* 終了 */
 function end(){
@@ -146,7 +174,6 @@ function end(){
   const cps=(count/limit).toFixed(2);
   result.textContent=`結果：${count} 回（${cps}/秒）`;
 
-  // フェイク全国順位
   const rank=Math.floor(Math.random()*(pop-1))+1;
   nationRank.textContent=`🌍 あなたは全国 ${rank.toLocaleString()} 位！`;
 
@@ -154,25 +181,29 @@ function end(){
   showRank();
 }
 
-/* ランキング */
+/* ランキング保存 */
 function saveRank(score){
   const key="rank_"+limit;
-  const name=document.getElementById("player").value||"NO NAME";
-  const list=JSON.parse(localStorage.getItem(key)||"[]");
+  const name=document.getElementById("player").value || "NO NAME";
+  const list=JSON.parse(localStorage.getItem(key) || "[]");
   list.push({name,score});
   list.sort((a,b)=>b.score-a.score);
-  localStorage.setItem(key,JSON.stringify(list.slice(0,5)));
+  localStorage.setItem(key, JSON.stringify(list.slice(0,5)));
 }
 
+/* ランキング表示 */
 function showRank(){
   const key="rank_"+limit;
-  const list=JSON.parse(localStorage.getItem(key)||"[]");
+  const list=JSON.parse(localStorage.getItem(key) || "[]");
   rankingEl.innerHTML="";
   list.forEach((r,i)=>{
     rankingEl.innerHTML+=
       `<div class="rank">${i+1}. ${r.name} - ${r.score}/秒</div>`;
   });
 }
+
+showRank();
 </script>
 </body>
 </html>
+
